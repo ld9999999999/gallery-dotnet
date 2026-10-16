@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gallery</title>
+<link rel="stylesheet" href="/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%234f8cff'/%3E%3C/svg%3E">
+</head>
+<body class="side-closed"><!-- The menu starts closed; ☰ opens it. -->
+<header id="topbar">
+  <button id="menuBtn" class="icon" title="Library">&#9776;</button>
+  <h1 id="title">Gallery</h1>
+  <button id="activityPill" class="pill-btn" hidden title="Show library status"><span class="spin"></span><span id="activityPillText"></span></button>
+  <input id="search" type="search" placeholder="Search name, folder, tag…" autocomplete="off">
+  <div class="seg" id="kindSeg">
+    <button data-kind="" class="on">All</button>
+    <button data-kind="image">Photos</button>
+    <button data-kind="video">Videos</button>
+    <button data-kind="audio">Audio</button>
+  </div>
+  <select id="tagKeySel"><option value="">Any tag</option></select>
+  <select id="tagValSel" hidden><option value="">Any value</option></select>
+  <select id="sortSel">
+    <option value="date_desc">Newest</option>
+    <option value="date_asc">Oldest</option>
+    <option value="name">Name</option>
+    <option value="added">Recently indexed</option>
+  </select>
+  <label class="chk" title="Only items that have exact duplicates"><input type="checkbox" id="dupsChk"> Dups</label>
+  <label class="chk" title="Only items with variations (e.g. JPEG + RAW)"><input type="checkbox" id="varChk"> Variations</label>
+  <label class="slider" title="Thumbnail size">&#9633; <input type="range" id="sizeRange" min="90" max="420" step="10" value="180"> &#9634;</label>
+  <button id="selectBtn" class="ghost">Select</button>
+  <span id="userBox"></span>
+</header>
+<nav id="layoutTabs">
+  <a href="#/" data-layout="all">All items</a>
+  <a href="#/albums" data-layout="albums">Albums</a>
+  <a href="#/years" data-layout="years">Years</a>
+  <a href="#/people" data-layout="people">People</a>
+</nav>
+<datalist id="peopleNames"></datalist>
+
+<aside id="sidebar">
+  <div class="side-head"><strong>Library</strong><span id="libUpdated" class="muted small"></span></div>
+  <div id="libStats" class="lib-stats"></div>
+  <div id="activity" class="activity" hidden></div>
+  <div class="side-foot">
+    <a href="#/admin" class="admin-only">Admin</a>
+  </div>
+</aside>
+
+<main id="main"></main>
+<div id="scrollPill" hidden></div>
+<div id="monthNav" hidden><button id="monthPrev" aria-label="Previous month">&#9650;</button><button id="monthNext" aria-label="Next month">&#9660;</button></div>
+
+<div id="selbar" hidden>
+  <span id="selCount">0 selected</span>
+  <button id="selAllBtn" class="ghost">Select all (filtered)</button>
+  <button id="selClearBtn" class="ghost">Clear</button>
+  <button id="selCollageBtn" title="Put up to 9 whole photos in one picture">Collage…</button>
+  <span class="admin-only">
+    <button id="selTagBtn">Tag…</button>
+    <button id="selAlbumBtn">Add to album…</button>
+    <button id="selRemoveAlbumBtn" hidden>Remove from album</button>
+    <button id="selCoverBtn" class="ghost" hidden title="Use the selected photo as the cover in Albums or Years">Use as cover</button>
+    <button id="selRecipeBtn">Apply recipe…</button>
+    <button id="selHideBtn" class="ghost" title="Only admins can see these">Hide from viewers</button>
+    <button id="selShowBtn" class="ghost">Show to viewers</button>
+    <button id="selSqueezeBtn" class="ghost" title="Stretch photos taken through an anamorphic lens">Anamorphic…</button>
+  </span>
+  <button id="selDoneBtn" class="ghost">Done</button>
+</div>
+
+<div id="lightbox" hidden>
+  <button class="lb-close icon" id="lbClose" title="Close (Esc)">&times;</button>
+  <button class="lb-nav lb-prev icon" id="lbPrev" title="Previous (←)">&#8249;</button>
+  <button class="lb-nav lb-next icon" id="lbNext" title="Next (→)">&#8250;</button>
+  <div class="lb-tools">
+    <button class="icon" id="lbPano" title="Show flat (v)" aria-label="360° or flat" hidden>360°</button>
+    <button class="icon" id="lbMotion" title="Look around by moving the phone" aria-label="Look around by moving the phone" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M11 18h2"/><path d="M4 9a5 5 0 0 0 0 6M20 9a5 5 0 0 1 0 6"/></svg></button>
+    <button class="icon" id="lbRotL" title="Rotate counter-clockwise ([)" aria-label="Rotate counter-clockwise"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+    <button class="icon" id="lbRotR" title="Rotate clockwise (])" aria-label="Rotate clockwise"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
+    <button class="icon" id="lbFaces" title="Faces (f)" aria-label="Faces" hidden><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="10" r="3"/><path d="M7 17c1-2.3 2.8-3.5 5-3.5s4 1.2 5 3.5"/></svg></button>
+    <button class="icon" id="lbEdit" title="Edit (e)" aria-label="Edit" hidden><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></button>
+    <select id="lbZoom" class="lb-zoom" title="Zoom (z: fit or 100%, + and − to step, 0 to fit)" aria-label="Zoom" hidden>
+      <option value="fit">Fit</option><option value="0.5">50%</option><option value="0.75">75%</option>
+      <option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option>
+    </select>
+    <button class="lb-info icon" id="lbInfoBtn" title="Info (i)">i</button>
+  </div>
+  <div id="lbStage"></div>
+  <div id="lbPanel" hidden></div>
+</div>
+
+<div id="editor" hidden>
+  <div id="edStage">
+    <canvas id="edCanvas"></canvas>
+    <div id="edCropBox" hidden><i data-h="nw"></i><i data-h="n"></i><i data-h="ne"></i><i data-h="e"></i><i data-h="se"></i><i data-h="s"></i><i data-h="sw"></i><i data-h="w"></i></div>
+    <div id="edMsg" hidden></div>
+    <div id="edBefore" hidden>Before</div>
+    <form id="edRecipeForm" class="ed-dialog" hidden>
+      <h3>Save as recipe</h3>
+      <label>Name <input name="name" maxlength="100" placeholder="e.g. Warm evening" required></label>
+      <fieldset class="ed-radio"><legend>Keep in the recipe</legend>
+        <label><input type="checkbox" name="whiteBalance" checked> White balance</label>
+        <label><input type="checkbox" name="tone" checked> Tone (exposure, contrast, brightness, highlights, shadows)</label>
+        <label><input type="checkbox" name="color" checked> Colour (saturation, vibrance)</label>
+        <label><input type="checkbox" name="curves" checked> Curves</label>
+        <label><input type="checkbox" name="detail" checked> Detail (noise reduction, sharpening)</label>
+      </fieldset>
+      <div class="row"><button type="submit">Save</button><button type="button" class="ghost" data-cancel>Cancel</button><span class="muted small" data-state></span></div>
+    </form>
+    <div id="edRecipeList" class="ed-dialog" hidden>
+      <h3>Recipes</h3>
+      <div data-list></div>
+      <div class="row"><button type="button" class="ghost" data-cancel>Close</button></div>
+    </div>
+    <form id="edExport" class="ed-dialog" hidden>
+      <h3>Export to JPEG</h3>
+      <label>Size
+        <select name="size">
+          <option value="original">Original</option>
+          <option value="3840">3840 px (long edge)</option>
+          <option value="2048">2048 px</option>
+          <option value="1080">1080 px</option>
+          <option value="custom">Custom long edge…</option>
+          <option value="percent">Percentage…</option>
+        </select>
+        <input name="sizeValue" type="number" min="1" step="1" hidden>
+      </label>
+      <label>Quality <output name="qualityOut"></output>
+        <input name="quality" type="range" min="1" max="100" step="1" value="90">
+      </label>
+      <fieldset class="ed-radio"><legend>Colour detail</legend>
+        <label><input type="radio" name="chroma" value="full" checked> Full (4:4:4)</label>
+        <label><input type="radio" name="chroma" value="half"> Half (4:2:0, smaller files)</label>
+      </fieldset>
+      <label class="chk"><input type="checkbox" name="keepLocation" checked> Keep the GPS location</label>
+      <label class="chk"><input type="checkbox" name="gallery" checked> Save to the gallery as a variation of this photo</label>
+      <label class="chk ed-indent"><input type="checkbox" name="primary"> Make it the photo's main file</label>
+      <label class="chk"><input type="checkbox" name="download"> Download</label>
+      <div class="muted small" id="edEstimate"></div>
+      <div class="row"><button type="submit">Export</button><button type="button" class="ghost" id="edExportCancel">Cancel</button><span class="muted small" id="edExportState"></span></div>
+    </form>
+  </div>
+  <aside id="edPanel">
+    <header class="ed-head">
+      <div class="ed-title"><b id="edTitle"></b><span class="muted small" id="edSub"></span></div>
+      <button class="icon" id="edClose" title="Close (Esc)" aria-label="Close">&times;</button>
+    </header>
+    <div class="ed-actions">
+      <button class="ghost small" id="edUndo" title="Undo (Ctrl/⌘ Z, up to 4 steps)">Undo</button>
+      <button class="ghost small" id="edRedo" title="Redo (Shift Ctrl/⌘ Z)">Redo</button>
+      <button class="ghost small" id="edReset" title="Back to the original photo">Reset</button>
+      <button class="ghost small" id="edCompare" title="Hold to see the original (\)">Before</button>
+      <button class="ghost small" id="edCropBtn" title="Crop and straighten (c)">Crop</button>
+      <span class="ed-zoom">
+        <button class="ghost small" id="edZoom" title="100%: one picture pixel per screen pixel (z or double-click). Drag to pan; click again to see the whole picture.">100%</button>
+        <button class="ghost small" id="edZoom200" title="200%: each picture pixel shown as 2×2 pixels. Ctrl/⌘ + and − step between views; Ctrl/⌘ 0 fits the whole picture.">200%</button>
+      </span>
+      <span class="grow"></span>
+      <span class="muted small" id="edState"></span>
+      <button class="small" id="edSave" title="Save (Ctrl/⌘ S)">Save</button>
+      <button class="ghost small" id="edExportBtn" title="Export to JPEG">Export…</button>
+    </div>
+    <div id="edCropPanel" hidden>
+      <h4>Crop and straighten</h4>
+      <div class="ed-crop-row">
+        <select id="edAspect" title="Lock the frame's shape"></select>
+        <button class="ghost small" id="edAspectTurn" title="Switch between landscape and portrait">&#x21BB; Turn</button>
+      </div>
+      <label class="ed-slider"><span>Straighten</span><output id="edAngleOut"></output>
+        <input type="range" id="edAngle" min="-45" max="45" step="0.1" value="0" title="Rotates the picture under the frame; double-click to reset"></label>
+      <div class="ed-actions">
+        <button class="ghost small" id="edCropReset" title="Whole picture, no rotation">Reset crop</button>
+        <span class="grow"></span>
+        <button class="small" id="edCropDone" title="Done (Enter)">Done</button>
+      </div>
+      <div class="muted small">Drag the frame or its edges. Straightening turns the picture under the frame, which always stays inside it.</div>
+    </div>
+    <canvas id="edHist" width="512" height="150"></canvas>
+    <div class="muted small ed-clip"><span id="edClip"></span><span id="edTiming"></span></div>
+    <div id="edControls"></div>
+    <h4>Curve</h4>
+    <div id="edCurveTabs" class="ed-tabs"></div>
+    <div class="ed-curve-box"><canvas id="edCurve" width="256" height="256"></canvas></div>
+    <div class="muted small">Click to add a point, drag to move it, double-click to remove it.</div>
+    <h4>Recipes</h4>
+    <div class="ed-recipes">
+      <select id="edRecipe"><option value="">Choose a recipe…</option></select>
+      <button class="ghost small" id="edRecipeApply" disabled>Apply</button>
+    </div>
+    <div class="ed-actions">
+      <button class="ghost small" id="edRecipeSave">Save as recipe…</button>
+      <button class="ghost small" id="edRecipeManage">Manage…</button>
+    </div>
+  </aside>
+</div>
+
+<div id="modal" hidden><div id="modalBox"></div></div>
+<div id="toast" hidden></div>
+
+<template id="adminTpl">
+  <section class="admin-page">
+    <h2>Admin</h2>
+    <nav class="tabs">
+      <button data-tab="scan" class="on">Sources &amp; scan</button>
+      <button data-tab="settings">Settings</button>
+      <button data-tab="albums">Albums</button>
+      <button data-tab="faces">Faces</button>
+      <button data-tab="users">Users</button>
+      <button data-tab="dups">Duplicates</button>
+      <button data-tab="transcodes">Transcodes</button>
+      <button data-tab="memory">Memory</button>
+    </nav>
+    <div class="tab" data-tab="scan">
+      <h3>Source directories</h3>
+      <ul id="srcList"></ul>
+      <form id="srcForm" class="row"><input id="srcPath" placeholder="/path/to/photos" required><button>Add</button></form>
+      <h3>Scan</h3>
+      <div class="row"><button id="scanBtn">Scan now</button><button id="scanCancelBtn" class="ghost">Cancel</button><button id="rebuildBtn" class="ghost" title="Recompute how files are grouped into items">Rebuild items</button><button id="thumbsBtn" class="ghost" title="Create thumbnails for items that lack one">Generate missing thumbnails</button></div>
+      <pre id="scanStatus" class="status"></pre>
+      <h3>Statistics</h3>
+      <pre id="stats" class="status"></pre>
+    </div>
+    <div class="tab" data-tab="settings" hidden>
+      <form id="settingsForm" class="form">
+        <label>Gallery title <input name="gallery_title"></label>
+        <label>Derived content directory <input name="derived_dir" placeholder="(default: {DataDir}/derived)"><small>Transcoded video and audio, and future RAW edits, go here.</small></label>
+        <label><input type="checkbox" name="keep_transcodes"> Keep transcoded copies (otherwise transcode live every time)</label>
+        <label><input type="checkbox" name="transcode_when_idle"> Convert videos that can't be streamed as they are while the server is idle<small>Needs "Keep transcoded copies". Copies take disk space in the derived directory.</small></label>
+        <label><input type="checkbox" name="pregen_thumbs"> Generate thumbnails in the background while scanning</label>
+        <label>Thumbnail JPEG quality <input name="thumb_quality" type="number" min="40" max="100"></label>
+        <div class="row"><button>Save</button><span id="settingsInfo" class="muted"></span></div>
+      </form>
+    </div>
+    <div class="tab" data-tab="albums" hidden>
+      <p class="muted">An album shows 0 items if it was never filled or all its files were deleted. Removing
+        empty albums only removes the albums; photos and files stay. If deleted files come back, "Albums from folders"
+        recreates their folder albums. "Regenerate auto-albums" deletes every folder album and rebuilds one per
+        folder; manual albums stay as they are.</p>
+      <div class="row"><button id="pruneAlbumsBtn" class="danger" disabled>Remove empty albums</button>
+        <button id="autoAlbumsAdminBtn" class="ghost" title="Create or update albums from photo folders">Albums from folders</button>
+        <button id="regenAlbumsBtn" class="ghost danger" title="Delete all folder albums and rebuild them">Regenerate auto-albums</button>
+        <span id="albumAdminInfo" class="muted"></span></div>
+      <div id="albumUnplaced" class="muted small"></div>
+      <table id="emptyAlbumTable" class="table"><thead><tr><th>Empty album</th><th>Made</th><th>Dates</th><th>Created</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="tab" data-tab="faces" hidden>
+      <p class="muted">Faces are found in the background so you can name people and search for them later. The
+        models run on this server, so photos stay on it.</p>
+      <form id="facesForm" class="form">
+        <label><input type="checkbox" name="enabled"> Find faces in photos</label>
+        <label>Model pack <select name="pack"></select><small id="facePackInfo"></small></label>
+      </form>
+      <div class="row"><button id="faceDownloadBtn">Download models</button>
+        <button id="faceRetryBtn" class="ghost" title="Retry photos that failed">Retry failed photos</button>
+        <button id="faceAgainBtn" class="ghost danger" title="Search every photo again, e.g. after changing detector settings">Find faces again in every photo</button>
+        <button id="faceGroupBtn" class="ghost" title="Match new faces to people and group the rest now, without waiting for the next pass">Group faces now</button></div>
+      <pre id="faceStatus" class="status"></pre>
+    </div>
+    <div class="tab" data-tab="users" hidden>
+      <h3>Viewer access</h3>
+      <p class="muted">With no viewer password, anyone on the network can browse without logging in. Set one to require login as <code>viewer</code>.</p>
+      <form id="viewerPwForm" class="row"><input name="password" type="password" placeholder="Viewer password (empty = open)" autocomplete="new-password"><button>Save</button></form>
+      <h3>Admin password</h3>
+      <form id="adminPwForm" class="row"><input name="password" type="password" placeholder="New admin password" minlength="6" required autocomplete="new-password"><button>Change</button></form>
+      <h3>Accounts</h3>
+      <ul id="userList"></ul>
+    </div>
+    <div class="tab" data-tab="dups" hidden>
+      <p class="muted">Files with identical content (same hash). Use this list to free disk space by hand.</p>
+      <table id="dupTable" class="table"><thead><tr><th>Copies</th><th>Size each</th><th>Wasted</th><th>Paths</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="tab" data-tab="transcodes" hidden>
+      <p id="tcIdle" class="muted"></p>
+      <table id="tcTable" class="table"><thead><tr><th>Asset</th><th>Path</th><th>Size</th><th></th></tr></thead><tbody></tbody></table>
+    </div>
+    <div class="tab" data-tab="memory" hidden>
+      <p class="muted">What the server process holds in memory. The .NET heap holds the objects its code uses.
+        "Free memory now" releases the face models, pooled image buffers,
+        idle database connections and unused heap space.</p>
+      <div class="row"><button id="memFreeBtn">Free memory now</button><span id="memInfo" class="muted"></span></div>
+      <div id="memReport" class="mem-report"></div>
+    </div>
+  </section>
+</template>
+
+<script src="/app.js" type="module"></script>
+</body>
+</html>

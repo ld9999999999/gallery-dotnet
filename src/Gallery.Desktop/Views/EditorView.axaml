@@ -1,0 +1,238 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gallery.Desktop.ViewModels"
+             xmlns:v="using:Gallery.Desktop.Views"
+             x:Class="Gallery.Desktop.Views.EditorView"
+             x:DataType="vm:EditorViewModel"
+             Background="#0b0c0f">
+  <Grid ColumnDefinitions="*,Auto">
+    <DockPanel>
+      <!-- Top bar -->
+      <Border DockPanel.Dock="Top" Background="{StaticResource GalleryPanel}" BorderBrush="{StaticResource GalleryBorder}"
+              BorderThickness="0,0,0,1" Padding="16,6,8,6">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
+            <TextBlock Classes="muted" FontSize="12" Text="{Binding StateText}" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <Button Classes="bar" Content="Undo" Command="{Binding UndoCommand}" ToolTip.Tip="Undo (⌘Z or Ctrl+Z), up to 4 steps" />
+            <Button Classes="bar" Content="Redo" Command="{Binding RedoCommand}" ToolTip.Tip="Redo (⇧⌘Z or Ctrl+Shift+Z)" />
+            <Button Classes="bar" Content="Reset" Command="{Binding ResetCommand}" ToolTip.Tip="Back to the photo as it starts" />
+            <Button Classes="bar" x:Name="BeforeButton" Content="Before" IsEnabled="{Binding IsLoaded}"
+                    ToolTip.Tip="Hold to see the photo before your changes (or hold \)" />
+            <ToggleButton Classes="bar" Content="Crop" IsChecked="{Binding IsCropping, Mode=OneWay}" Command="{Binding ToggleCropCommand}" IsEnabled="{Binding IsLoaded}"
+                          ToolTip.Tip="Crop and straighten (C)" />
+            <ToggleButton Classes="bar" Content="100%" IsChecked="{Binding Is100, Mode=OneWay}" Command="{Binding Zoom100Command}" IsEnabled="{Binding IsLoaded}"
+                          ToolTip.Tip="100%: one picture pixel to one screen pixel (Z, or double-click the picture). Drag to look around; click again for the whole picture." />
+            <ToggleButton Classes="bar" Content="200%" IsChecked="{Binding Is200, Mode=OneWay}" Command="{Binding Zoom200Command}" IsEnabled="{Binding IsLoaded}"
+                          ToolTip.Tip="200%: each picture pixel as a 2×2 square. ⌘+ and ⌘− (Ctrl) step through the views, ⌘0 shows the whole picture." />
+            <Button Classes="bar accent" Content="Save" Command="{Binding SaveCommand}" ToolTip.Tip="Save the edit (⌘S or Ctrl+S)" />
+            <Button Classes="bar" Content="Export…" Command="{Binding OpenExportCommand}" IsEnabled="{Binding IsLoaded}" ToolTip.Tip="Export a JPEG" />
+            <Button Classes="tool" Command="{Binding CloseCommand}" ToolTip.Tip="Close (Esc)"><v:Icon Data="{StaticResource IconClose}" /></Button>
+          </StackPanel>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" />
+            <TextBlock Classes="muted" FontSize="12" Text="{Binding Subtitle}" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+
+      <!-- The picture -->
+      <Panel>
+        <Panel x:Name="Stage" Margin="16" ClipToBounds="True">
+          <Image x:Name="Picture" Source="{Binding Frame}" Width="{Binding FrameWidth}" Height="{Binding FrameHeight}" Stretch="Fill"
+                 HorizontalAlignment="Center" VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality" />
+        </Panel>
+        <!-- The crop frame, over the stage and its margin so the handles at its edges show whole -->
+        <v:CropOverlay x:Name="CropLayer" IsVisible="False" />
+        <Border Classes="badge" IsVisible="{Binding IsComparing}" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="24">
+          <TextBlock Text="Before" />
+        </Border>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440" Spacing="10"
+                    IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <Border Background="#cc15171c" CornerRadius="8" Padding="16,12">
+            <StackPanel Spacing="10">
+              <TextBlock Text="{Binding Message}" TextWrapping="Wrap" TextAlignment="Center" Foreground="White" />
+              <ProgressBar IsIndeterminate="True" IsVisible="{Binding !IsError}" Width="120" Height="4" HorizontalAlignment="Center" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+        <Border Classes="toast" IsVisible="{Binding Notice, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="24">
+          <TextBlock Text="{Binding Notice}" Foreground="White" />
+        </Border>
+        <TextBlock Classes="muted" FontSize="11" Text="{Binding Timing}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="20,0,0,4" />
+
+        <!-- Export -->
+        <Border Classes="dialog" IsVisible="{Binding IsExportOpen}">
+          <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="8" DataContext="{Binding Export}" x:DataType="vm:ExportViewModel">
+              <TextBlock Classes="section" Text="Export to JPEG" />
+              <TextBlock Classes="label" Text="Size" />
+              <ComboBox x:Name="ExportSize" ItemsSource="{Binding Sizes}" SelectedItem="{Binding Size}" HorizontalAlignment="Stretch">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate x:DataType="vm:Choice"><TextBlock Text="{Binding Label}" /></DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <NumericUpDown Value="{Binding SizeValue}" IsVisible="{Binding ShowSizeValue}" PlaceholderText="{Binding SizeValueHint}"
+                             Minimum="1" Maximum="100000" Increment="1" FormatString="0" />
+              <DockPanel Margin="0,4,0,0">
+                <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding QualityText}" />
+                <TextBlock Classes="label" Text="Quality" />
+              </DockPanel>
+              <Slider Classes="edit" Minimum="1" Maximum="100" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Value="{Binding Quality}" />
+              <TextBlock Classes="label" Text="Colour detail" />
+              <RadioButton GroupName="Chroma" IsChecked="{Binding FullChroma}" Content="Full (4:4:4)" />
+              <RadioButton GroupName="Chroma" IsChecked="{Binding HalfChroma}" Content="Halved (4:2:0, smaller files)" />
+              <CheckBox IsChecked="{Binding KeepLocation}" Content="Keep the location (GPS)" />
+              <CheckBox IsChecked="{Binding SaveToGallery}" Content="Add to the library, as a variation of this photo" />
+              <CheckBox IsChecked="{Binding UseAsPrimary}" IsEnabled="{Binding SaveToGallery}" Margin="26,0,0,0" Content="Use it as the photo's main file" />
+              <CheckBox IsChecked="{Binding SaveCopy}" Content="Save a copy to a file…" />
+              <TextBlock Classes="help" Text="{Binding Estimate}" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="accent" Content="Export" Command="{Binding RunCommand}" />
+                <Button Content="Cancel" Command="{Binding $parent[v:EditorView].((vm:EditorViewModel)DataContext).CloseDialogCommand}" />
+              </StackPanel>
+              <TextBlock Classes="help" Text="{Binding State}" />
+            </StackPanel>
+          </ScrollViewer>
+        </Border>
+
+        <!-- Save as recipe -->
+        <Border Classes="dialog" IsVisible="{Binding IsRecipeFormOpen}">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section" Text="Save as recipe" />
+            <TextBox x:Name="RecipeNameBox" Text="{Binding RecipeName}" PlaceholderText="Name, e.g. Warm evening" MaxLength="100" />
+            <TextBlock Classes="label" Text="Keep in the recipe" />
+            <CheckBox IsChecked="{Binding KeepWhiteBalance}" Content="White balance" />
+            <CheckBox IsChecked="{Binding KeepTone}" Content="Tone (exposure, contrast, brightness, highlights, shadows)" />
+            <CheckBox IsChecked="{Binding KeepColour}" Content="Colour (saturation, vibrance)" />
+            <CheckBox IsChecked="{Binding KeepCurves}" Content="Curves" />
+            <CheckBox IsChecked="{Binding KeepDetail}" Content="Detail (noise reduction, sharpening)" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Classes="accent" Content="Save" Command="{Binding SaveRecipeCommand}" />
+              <Button Content="Cancel" Command="{Binding CloseDialogCommand}" />
+            </StackPanel>
+            <TextBlock Classes="help" Foreground="{StaticResource GalleryDanger}" Text="{Binding RecipeFormMessage}" />
+          </StackPanel>
+        </Border>
+
+        <!-- Manage recipes -->
+        <Border Classes="dialog" IsVisible="{Binding IsRecipeListOpen}">
+          <StackPanel Spacing="8">
+            <TextBlock Classes="section" Text="Recipes" />
+            <TextBlock Classes="help" IsVisible="{Binding NoRecipes}" Text="No recipes yet. Use Save as recipe… to keep the current settings." />
+            <ItemsControl ItemsSource="{Binding Recipes}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:RecipeRow">
+                  <StackPanel Margin="0,4" Spacing="2">
+                    <DockPanel>
+                      <Button DockPanel.Dock="Right" Classes="danger" Content="Delete" Command="{Binding DeleteCommand}" Margin="4,0,0,0" />
+                      <Button DockPanel.Dock="Right" Content="Rename" Command="{Binding RenameCommand}" Margin="4,0,0,0" />
+                      <TextBox Text="{Binding Name}" MaxLength="100" />
+                    </DockPanel>
+                    <TextBlock Classes="muted" FontSize="11" Text="{Binding Parts}" />
+                    <TextBlock Classes="help" Foreground="{StaticResource GalleryDanger}" Text="{Binding Message}"
+                               IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button Content="Close" Command="{Binding CloseDialogCommand}" />
+          </StackPanel>
+        </Border>
+      </Panel>
+    </DockPanel>
+
+    <!-- Adjustments -->
+    <Border Grid.Column="1" Width="320" Background="{StaticResource GalleryPanel}" BorderBrush="{StaticResource GalleryBorder}" BorderThickness="1,0,0,0">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel x:Name="Controls" Margin="16,12,16,16" Spacing="4" IsEnabled="{Binding IsLoaded}">
+          <!-- Crop mode's controls, as the web editor's -->
+          <Border x:Name="CropPanel" IsVisible="{Binding IsCropping}" BorderBrush="{StaticResource GalleryBorder}" BorderThickness="0,0,0,1"
+                  Padding="0,0,0,10" Margin="0,0,0,8">
+            <StackPanel Spacing="8">
+              <TextBlock Classes="section" Text="Crop and straighten" />
+              <DockPanel>
+                <Button DockPanel.Dock="Right" Command="{Binding TurnCropCommand}" Margin="6,0,0,0" ToolTip.Tip="Turn the frame between across and upright">
+                  <StackPanel Orientation="Horizontal" Spacing="4">
+                    <v:Icon Data="{StaticResource IconRotateRight}" Width="15" Height="15" />
+                    <TextBlock Text="Turn" />
+                  </StackPanel>
+                </Button>
+                <ComboBox x:Name="CropRatioBox" ItemsSource="{Binding Ratios}" SelectedItem="{Binding CropRatio}" HorizontalAlignment="Stretch"
+                          ToolTip.Tip="Keep the frame to a shape">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:Choice"><TextBlock Text="{Binding Label}" /></DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </DockPanel>
+              <StackPanel DataContext="{Binding Straighten}" x:DataType="vm:SliderViewModel">
+                <DockPanel Margin="0,2,0,0">
+                  <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding Text}" />
+                  <TextBlock Classes="label" Text="{Binding Label}" />
+                </DockPanel>
+                <Slider x:Name="StraightenSlider" Classes="edit" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Value="{Binding Value}"
+                        SmallChange="{Binding Step}" LargeChange="{Binding LargeStep}" TickFrequency="{Binding Step}" IsSnapToTickEnabled="True"
+                        ToolTip.Tip="Turns the picture under the frame; double-click for level" />
+              </StackPanel>
+              <DockPanel>
+                <Button DockPanel.Dock="Right" Classes="accent" Content="Done" Command="{Binding ExitCropCommand}" ToolTip.Tip="Done (Enter)" />
+                <Button Content="Reset crop" Command="{Binding ResetCropCommand}" HorizontalAlignment="Left" ToolTip.Tip="The whole picture, level" />
+              </DockPanel>
+              <TextBlock Classes="help" Text="Drag the frame or its edges. The picture turns under it as you straighten, and the frame stays inside it." />
+            </StackPanel>
+          </Border>
+          <v:HistogramView Height="96" Values="{Binding Histogram}" />
+          <TextBlock Classes="muted" FontSize="11" Text="{Binding ClipText}" />
+          <ItemsControl ItemsSource="{Binding Groups}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SliderGroup">
+                <StackPanel Margin="0,10,0,0">
+                  <TextBlock Classes="section" Text="{Binding Title}" />
+                  <ItemsControl ItemsSource="{Binding Sliders}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:SliderViewModel">
+                        <StackPanel>
+                          <DockPanel Margin="0,2,0,0">
+                            <TextBlock DockPanel.Dock="Right" FontSize="12" Text="{Binding Text}" />
+                            <TextBlock Classes="label" Text="{Binding Label}" />
+                          </DockPanel>
+                          <Slider Classes="edit" Minimum="{Binding Minimum}" Maximum="{Binding Maximum}" Value="{Binding Value}"
+                                  SmallChange="{Binding Step}" LargeChange="{Binding LargeStep}" TickFrequency="{Binding Step}" IsSnapToTickEnabled="True" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <TextBlock Classes="section" Text="Curves" Margin="0,12,0,0" />
+          <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2,0,6">
+            <RadioButton Classes="chip" GroupName="Curve" Content="RGB" IsChecked="{Binding IsRgbCurve}" />
+            <RadioButton Classes="chip" GroupName="Curve" Content="Red" IsChecked="{Binding IsRedCurve}" />
+            <RadioButton Classes="chip" GroupName="Curve" Content="Green" IsChecked="{Binding IsGreenCurve}" />
+            <RadioButton Classes="chip" GroupName="Curve" Content="Blue" IsChecked="{Binding IsBlueCurve}" />
+          </StackPanel>
+          <v:CurveEditor x:Name="Curve" HorizontalAlignment="Left" Points="{Binding CurvePoints}" Stroke="{Binding CurveColour}" Histogram="{Binding Histogram}" />
+          <TextBlock Classes="help" Text="Click to add a point, drag to move it, double-click to remove it." />
+
+          <TextBlock Classes="section" Text="Recipes" Margin="0,12,0,0" />
+          <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Apply" Command="{Binding ApplyRecipeCommand}" Margin="6,0,0,0" />
+            <ComboBox ItemsSource="{Binding Recipes}" SelectedItem="{Binding SelectedRecipe}" PlaceholderText="Choose a recipe…" HorizontalAlignment="Stretch">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:RecipeRow"><TextBlock Text="{Binding Recipe.Name}" /></DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+          </DockPanel>
+          <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+            <Button Classes="link" Content="Save as recipe…" Command="{Binding OpenRecipeFormCommand}" />
+            <Button Classes="link" Content="Manage…" Command="{Binding OpenRecipeListCommand}" />
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>

@@ -1,0 +1,201 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gallery.Desktop.ViewModels"
+             xmlns:v="using:Gallery.Desktop.Views"
+             xmlns:core="using:Gallery.Core.Services"
+             x:Class="Gallery.Desktop.Views.ViewerView"
+             x:DataType="vm:ViewerViewModel">
+  <Grid ColumnDefinitions="*,Auto" Background="#0b0c0f">
+    <Panel>
+      <!-- The photo, fitted to the window or zoomed; its size, the scroll bars and the scrolling are set in code from View -->
+      <ScrollViewer x:Name="PhotoScroller" Background="Transparent" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Disabled"
+                    IsVisible="{Binding IsFlat}">
+        <Panel x:Name="PhotoSheet" HorizontalAlignment="Center" VerticalAlignment="Center">
+          <Image x:Name="Photo" Source="{Binding Image}" Stretch="Uniform" />
+          <v:FaceOverlay x:Name="Faces" Faces="{Binding Faces}" Source="{Binding Image}" SelectedFace="{Binding SelectedFace}"
+                         Command="{Binding SelectFaceCommand}" IsVisible="{Binding ShowFaces}" />
+        </Panel>
+      </ScrollViewer>
+      <!-- A 360° photo: the view from the middle of its sphere; dragging, scrolling, pinching and double-clicks are handled in code -->
+      <v:SphereView x:Name="Sphere" IsVisible="{Binding IsSphere}" Renderer="{Binding Sphere}" Revision="{Binding SphereRevision}"
+                    Yaw="{Binding Yaw}" Pitch="{Binding Pitch}" Fov="{Binding Fov}" Cursor="SizeAll" />
+      <Border IsVisible="{Binding SphereNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+              Margin="0,0,0,24" Padding="12,6" CornerRadius="14" Background="#d91d2027" IsHitTestVisible="False">
+        <TextBlock Text="{Binding SphereNote}" FontSize="13" Foreground="White" />
+      </Border>
+      <v:Icon Width="120" Height="120" Foreground="{StaticResource GalleryMuted}" HorizontalAlignment="Center" VerticalAlignment="Center"
+              Data="{Binding Glyph, Converter={x:Static v:IconConverters.ByName}}" Filled="{Binding Glyph, Converter={x:Static v:IconConverters.IsFilled}}"
+              IsVisible="{Binding Glyph, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420" Spacing="6"
+                  IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+        <TextBlock Classes="title" HorizontalAlignment="Center" Text="{Binding Message}" />
+        <TextBlock Classes="help" TextAlignment="Center" Text="{Binding MessageDetail}" />
+      </StackPanel>
+      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsLoading}" Width="120" Height="4" VerticalAlignment="Center" HorizontalAlignment="Center" />
+      <Button Classes="nav" Content="‹" HorizontalAlignment="Left" Margin="12,0" Command="{Binding PreviousCommand}" ToolTip.Tip="Previous (←)" />
+      <Button Classes="nav" Content="›" HorizontalAlignment="Right" Margin="12,0" Command="{Binding NextCommand}" ToolTip.Tip="Next (→)" />
+
+      <!-- Backed, so the title and buttons can be read over a zoomed photo -->
+      <Border VerticalAlignment="Top" Background="#d90b0c0f">
+        <DockPanel Margin="16,8,8,6">
+          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="2">
+            <Button Classes="tool" IsVisible="{Binding IsPlayable}" Command="{Binding OpenFileCommand}" ToolTip.Tip="Play in the default app">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <v:Icon Data="{StaticResource IconPlay}" Filled="True" Width="14" Height="14" />
+                <TextBlock Text="Play" FontSize="14" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Classes="tool" Command="{Binding OpenFileCommand}" ToolTip.Tip="Open in the default app"><v:Icon Data="{StaticResource IconOpen}" /></Button>
+            <Button Classes="tool" Command="{Binding ShowInFolderCommand}" ToolTip.Tip="Show in folder"><v:Icon Data="{StaticResource IconFolder}" /></Button>
+            <Button Classes="tool" Command="{Binding EditCommand}" IsVisible="{Binding CanEdit}" ToolTip.Tip="Edit (E)"><v:Icon Data="{StaticResource IconEdit}" /></Button>
+            <Button x:Name="FacesButton" Classes="tool" Command="{Binding ToggleFacesCommand}" IsVisible="{Binding HasFaces}" ToolTip.Tip="Faces (F)"><v:Icon Data="{StaticResource IconFaces}" /></Button>
+            <!-- On while the 360° view is shown; off shows the photo flat, the whole picture at once -->
+            <ToggleButton x:Name="SphereButton" Classes="tool" Content="360°" FontSize="13" FontWeight="SemiBold" IsVisible="{Binding CanSphere}"
+                          IsChecked="{Binding IsSphere, Mode=OneWay}" Command="{Binding ToggleSphereCommand}"
+                          ToolTip.Tip="360° view, to look around in, or the photo flat (V). Drag to look around, scroll or pinch to zoom, ↑ ↓ and Shift+← → to turn, 0 or a double-click to reset." />
+            <Button Classes="tool" Command="{Binding RotateLeftCommand}" IsVisible="{Binding IsFlat}" ToolTip.Tip="Rotate counter-clockwise ([)"><v:Icon Data="{StaticResource IconRotateLeft}" /></Button>
+            <Button Classes="tool" Command="{Binding RotateRightCommand}" IsVisible="{Binding IsFlat}" ToolTip.Tip="Rotate clockwise (])"><v:Icon Data="{StaticResource IconRotateRight}" /></Button>
+            <ComboBox x:Name="ZoomBox" ItemsSource="{Binding ZoomOptions}" SelectedItem="{Binding SelectedZoom}" IsVisible="{Binding CanZoom}"
+                      VerticalAlignment="Center" Margin="4,0" MinWidth="104" FontSize="13"
+                      ToolTip.Tip="Zoom: 100% is one photo pixel per screen pixel. Z for fit or 100%, + and − to step, 0 to fit; double-click the photo for 100% there, ⌘/Ctrl + scroll to step. Drag to move about.">
+              <ComboBox.ItemTemplate>
+                <DataTemplate x:DataType="vm:ZoomOption">
+                  <TextBlock Text="{Binding Label}" />
+                </DataTemplate>
+              </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Classes="tool" Command="{Binding ToggleInfoCommand}" ToolTip.Tip="Info (I)"><v:Icon Data="{StaticResource IconInfo}" /></Button>
+            <Button Classes="tool" Command="{Binding CloseCommand}" ToolTip.Tip="Close (Esc)"><v:Icon Data="{StaticResource IconClose}" /></Button>
+          </StackPanel>
+          <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="White" TextTrimming="CharacterEllipsis" />
+            <TextBlock Classes="muted" FontSize="12" Text="{Binding Position}" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+    </Panel>
+
+    <!-- Info panel -->
+    <Border Grid.Column="1" Width="340" IsVisible="{Binding ShowInfo}" Background="{StaticResource GalleryPanel}"
+            BorderBrush="{StaticResource GalleryBorder}" BorderThickness="1,0,0,0">
+      <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="16" Spacing="6">
+          <TextBlock Classes="section" Text="{Binding Title}" TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding Info}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:InfoRow">
+                <Grid ColumnDefinitions="90,*" Margin="0,1">
+                  <TextBlock Classes="muted" FontSize="12" Text="{Binding Label}" />
+                  <TextBlock Grid.Column="1" FontSize="12" Text="{Binding Value}" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <!-- An anamorphic lens's factor: the long side is stretched by it wherever the photo is shown, edited or exported -->
+          <Grid ColumnDefinitions="90,*" Margin="0,4,0,0" IsVisible="{Binding CanSqueeze}">
+            <TextBlock Classes="muted" FontSize="12" Text="Anamorphic" VerticalAlignment="Center" />
+            <ComboBox Grid.Column="1" ItemsSource="{Binding SqueezeOptions}" SelectedItem="{Binding SelectedSqueeze}" MinWidth="110"
+                      ToolTip.Tip="An anamorphic lens's factor: the long side is stretched by it wherever the photo is shown, edited or exported. The file is not changed." />
+          </Grid>
+          <!-- Whether the photo is shown as a 360° view: as detected, or as said here (the projection tag, for everyone) -->
+          <Grid ColumnDefinitions="90,*" Margin="0,4,0,0" IsVisible="{Binding CanChooseProjection}">
+            <TextBlock Classes="muted" FontSize="12" Text="360°" VerticalAlignment="Center" />
+            <ComboBox x:Name="ProjectionBox" Grid.Column="1" ItemsSource="{Binding ProjectionOptions}" SelectedItem="{Binding SelectedProjection}" MinWidth="150"
+                      ToolTip.Tip="How the viewer shows it, in the web gallery too: as detected, as a 360° photo to look around in, or flat." />
+          </Grid>
+          <!-- People in the photo; the face clicked in the photo can be named or corrected here -->
+          <TextBlock Classes="section" Text="People" Margin="0,10,0,0" IsVisible="{Binding HasFaces}" />
+          <ItemsControl ItemsSource="{Binding People}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:PersonChip">
+                <Button Classes="link" Content="{Binding Name}" Margin="0,1" ToolTip.Tip="Show this person's photos"
+                        Command="{Binding $parent[ItemsControl].((vm:ViewerViewModel)DataContext).OpenPersonCommand}" CommandParameter="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Classes="muted" FontSize="12" Text="{Binding UnassignedFaces}" IsVisible="{Binding UnassignedFaces, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <Button Classes="link" Content="{Binding FacesToggleLabel}" Command="{Binding ToggleFacesCommand}" IsVisible="{Binding HasFaces}" />
+          <Border Classes="panel" IsVisible="{Binding HasSelectedFace}" Margin="0,4,0,0">
+            <StackPanel Spacing="6">
+              <TextBlock FontWeight="SemiBold" Text="{Binding SelectedFaceLabel}" />
+              <TextBox x:Name="FaceNameBox" PlaceholderText="Who is this?" Text="{Binding FaceName}" />
+              <WrapPanel ItemSpacing="6" LineSpacing="6">
+                <Button Content="{Binding AssignLabel}" Command="{Binding AssignFaceCommand}" />
+                <Button Content="Not this person" Command="{Binding NotThisPersonCommand}" IsVisible="{Binding SelectedFaceHasPerson}" />
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+          <!-- The file's metadata, as in the web gallery: a summary, the location (a link to a map), and every tag of every group -->
+          <TextBlock Classes="section" Text="{Binding MetadataHeading}" Margin="0,10,0,0"
+                     IsVisible="{Binding MetadataHeading, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <ItemsControl ItemsSource="{Binding Camera}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:InfoRow">
+                <Grid ColumnDefinitions="90,*" Margin="0,1">
+                  <TextBlock Classes="muted" FontSize="12" Text="{Binding Label}" />
+                  <TextBlock Grid.Column="1" FontSize="12" Text="{Binding Value}" TextWrapping="Wrap" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Grid ColumnDefinitions="90,*" Margin="0,1" IsVisible="{Binding LocationText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Classes="muted" FontSize="12" Text="Location" VerticalAlignment="Center" />
+            <Button x:Name="LocationLink" Grid.Column="1" Classes="link" FontSize="12" Content="{Binding LocationText}" Command="{Binding OpenLocationCommand}"
+                    ToolTip.Tip="Open in OpenStreetMap" />
+          </Grid>
+          <TextBlock Classes="muted" FontSize="12" Text="{Binding MetadataEmpty}" IsVisible="{Binding MetadataEmpty, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+          <Expander x:Name="AllMetadata" Header="{Binding AllMetadataLabel}" IsExpanded="{Binding ShowAllMetadata}" IsVisible="{Binding HasAllMetadata}"
+                    HorizontalAlignment="Stretch" Margin="0,6,0,0" Padding="8">
+            <StackPanel Spacing="8">
+              <TextBox x:Name="MetadataFilterBox" PlaceholderText="Filter tags…" Text="{Binding MetadataFilter}" FontSize="12" />
+              <ItemsControl ItemsSource="{Binding MetadataGroups}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:MetadataGroupRow">
+                    <StackPanel Margin="0,0,0,10" Spacing="1">
+                      <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding Heading}" Margin="0,0,0,2" />
+                      <ItemsControl ItemsSource="{Binding Tags}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="core:MetaTag">
+                            <Grid ColumnDefinitions="110,*" Margin="0,1">
+                              <TextBlock Classes="muted" FontSize="11" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                              <SelectableTextBlock Grid.Column="1" FontSize="11" Text="{Binding Value}" TextWrapping="Wrap" />
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+          </Expander>
+          <TextBlock Classes="section" Text="Tags" Margin="0,10,0,0" IsVisible="{Binding Tags.Count}" />
+          <ItemsControl ItemsSource="{Binding Tags}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="x:String">
+                <TextBlock FontSize="12" Text="{Binding}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Classes="section" Text="{Binding Variations.Count, StringFormat='Files ({0})'}" Margin="0,10,0,0" />
+          <ItemsControl ItemsSource="{Binding Variations}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:VariationRow">
+                <StackPanel Margin="0,4" Spacing="1">
+                  <TextBlock FontSize="12" FontWeight="SemiBold" Text="{Binding FileName}" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Classes="muted" FontSize="11" Text="{Binding Meta}" />
+                  <TextBlock Classes="muted" FontSize="11" Text="{Binding Path}" TextWrapping="Wrap" />
+                  <Button Classes="link" Content="Show this file" IsVisible="{Binding CanShow}"
+                          Command="{Binding $parent[ItemsControl].((vm:ViewerViewModel)DataContext).ShowVariationCommand}" CommandParameter="{Binding}" />
+                  <Button Classes="link" Content="Delete this edited copy" IsVisible="{Binding CanDelete}"
+                          ToolTip.Tip="Made in the photo editor; the original is not touched. Export again for a new copy."
+                          Command="{Binding $parent[ItemsControl].((vm:ViewerViewModel)DataContext).DeleteEditCommand}" CommandParameter="{Binding}" />
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>

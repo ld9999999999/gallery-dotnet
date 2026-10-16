@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- NU1902/NU1903: see Gallery.Core.csproj (ImageSharp 3.1 is kept on purpose). -->
+    <NoWarn>$(NoWarn);NU1902;NU1903</NoWarn>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gallery.Core\Gallery.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Gallery.Tests" />
+  </ItemGroup>
+
+  <!-- The photo editor's WebAssembly module (Gallery.Develop.Wasm), published into wwwroot/editor when its sources change.
+       Needs `dotnet workload install wasm-tools`; build with -p:BuildEditor=false to skip it. -->
+  <PropertyGroup>
+    <BuildEditor Condition="'$(BuildEditor)' == ''">true</BuildEditor>
+    <EditorProject>$(MSBuildProjectDirectory)/../Gallery.Develop.Wasm/Gallery.Develop.Wasm.csproj</EditorProject>
+    <EditorOutput>$(MSBuildProjectDirectory)/wwwroot/editor</EditorOutput>
+    <EditorPublish>$(MSBuildProjectDirectory)/$(BaseIntermediateOutputPath)editor-publish</EditorPublish>
+    <WasmToolsInstalled Condition="Exists('$(NetCoreTargetingPackRoot)/Microsoft.NET.Runtime.WebAssembly.Sdk')">true</WasmToolsInstalled>
+  </PropertyGroup>
+  <ItemGroup>
+    <EditorSources Include="../Gallery.Develop/**/*.cs;../Gallery.Develop.Wasm/**/*.cs;../Gallery.Develop.Wasm/*.csproj"
+                   Exclude="../Gallery.Develop/obj/**;../Gallery.Develop/bin/**;../Gallery.Develop.Wasm/obj/**;../Gallery.Develop.Wasm/bin/**" />
+    <Content Remove="wwwroot/editor/**" />
+  </ItemGroup>
+  <!-- Listed when the build gets to copying files, after BuildEditor may have replaced them with new fingerprinted names. -->
+  <Target Name="AddEditorFiles" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <None Remove="wwwroot/editor/**" />
+      <None Include="wwwroot/editor/**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+  </Target>
+  <Target Name="BuildEditor" BeforeTargets="BeforeBuild" Condition="'$(BuildEditor)' == 'true' and '$(WasmToolsInstalled)' == 'true'"
+          Inputs="@(EditorSources)" Outputs="$(EditorOutput)/_framework/dotnet.js">
+    <Message Importance="high" Text="Building the photo editor (WebAssembly, AOT)…" />
+    <RemoveDir Directories="$(EditorPublish)" />
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; publish &quot;$(EditorProject)&quot; -c Release -nologo -v q -o &quot;$(EditorPublish)&quot;" />
+    <RemoveDir Directories="$(EditorOutput)" />
+    <ItemGroup>
+      <EditorFiles Include="$(EditorPublish)/wwwroot/**/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(EditorFiles)" DestinationFiles="@(EditorFiles->'$(EditorOutput)/%(RecursiveDir)%(Filename)%(Extension)')" />
+    <Touch Files="$(EditorOutput)/_framework/dotnet.js" />
+  </Target>
+  <Target Name="EditorNotBuilt" BeforeTargets="BeforeBuild"
+          Condition="'$(BuildEditor)' == 'true' and '$(WasmToolsInstalled)' != 'true' and !Exists('$(EditorOutput)/_framework/dotnet.js')">
+    <Warning Text="The photo editor is not built: run 'dotnet workload install wasm-tools' (or build with -p:BuildEditor=false)." />
+  </Target>
+
+</Project>

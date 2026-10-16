@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gallery.Desktop.ViewModels"
+             xmlns:v="using:Gallery.Desktop.Views"
+             x:Class="Gallery.Desktop.Views.AllPhotosView"
+             x:DataType="vm:AllPhotosViewModel">
+  <DockPanel>
+    <WrapPanel DockPanel.Dock="Top" Margin="12,10,12,4" ItemSpacing="8" LineSpacing="6">
+      <TextBox x:Name="SearchBox" Width="280" PlaceholderText="Search name, folder or tag" Text="{Binding Search}" />
+      <ComboBox Width="140" ItemsSource="{Binding Kinds}" SelectedItem="{Binding Kind}">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:Choice"><TextBlock Text="{Binding Label}" /></DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+      <ComboBox Width="160" ItemsSource="{Binding Sorts}" SelectedItem="{Binding Sort}">
+        <ComboBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:Choice"><TextBlock Text="{Binding Label}" /></DataTemplate>
+        </ComboBox.ItemTemplate>
+      </ComboBox>
+      <CheckBox Content="Duplicates" IsChecked="{Binding DuplicatesOnly}" ToolTip.Tip="Only items with byte-identical copies" />
+      <CheckBox Content="Variations" IsChecked="{Binding VariationsOnly}" ToolTip.Tip="Only items with more than one file, such as a JPEG and its RAW" />
+      <TextBlock Classes="muted" VerticalAlignment="Center" Text="{Binding Grid.Total, StringFormat='{}{0:N0} items'}" />
+    </WrapPanel>
+    <v:PhotoGridView DataContext="{Binding Grid}" />
+  </DockPanel>
+</UserControl>

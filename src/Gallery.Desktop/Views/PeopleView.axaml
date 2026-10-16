@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gallery.Desktop.ViewModels"
+             xmlns:v="using:Gallery.Desktop.Views"
+             x:Class="Gallery.Desktop.Views.PeopleView"
+             x:DataType="vm:PeopleViewModel">
+  <Grid ColumnDefinitions="300,*">
+    <!-- The people: named first, then suggestions -->
+    <DockPanel Background="{StaticResource GalleryPanel}">
+      <StackPanel DockPanel.Dock="Top" Margin="12,10,12,6" Spacing="6">
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="Group now" Command="{Binding GroupNowCommand}"
+                  ToolTip.Tip="Match new faces to people and group the rest now, instead of waiting for the next pass" />
+          <CheckBox Content="Hidden people" IsChecked="{Binding ShowHidden}" />
+        </DockPanel>
+        <Button x:Name="UnassignedButton" Classes="link" Content="{Binding UnassignedLabel}" Command="{Binding ShowUnassignedFacesCommand}" />
+        <TextBlock Classes="help" IsVisible="{Binding IsEmpty}" TextWrapping="Wrap"
+                   Text="No people yet. Faces are grouped into people once they have been found (Settings › Faces)." />
+      </StackPanel>
+      <ListBox x:Name="PeopleList" ItemsSource="{Binding People}" SelectedItem="{Binding Selected}" Background="Transparent">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:PersonEntryViewModel">
+            <v:Realizer>
+              <Grid ColumnDefinitions="48,*">
+                <Border Width="48" Height="48" CornerRadius="24" ClipToBounds="True" Background="{StaticResource GalleryCell}">
+                  <Image Source="{Binding Cover}" Stretch="UniformToFill" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="2">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                             Classes.muted="{Binding IsSuggestion}" />
+                  <TextBlock Classes="muted" FontSize="12" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </Grid>
+            </v:Realizer>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+
+    <DockPanel Grid.Column="1">
+      <StackPanel DockPanel.Dock="Top" Margin="16,10,16,6" Spacing="8">
+        <TextBlock Classes="title" Text="{Binding PersonTitle}" TextTrimming="CharacterEllipsis" />
+        <!-- The person: name, photos or faces, merge, hide, delete -->
+        <WrapPanel IsVisible="{Binding HasPerson}" ItemSpacing="8" LineSpacing="6">
+          <TextBox x:Name="NameBox" Width="200" PlaceholderText="Who is this?" Text="{Binding NameText}" />
+          <Button Content="{Binding NameButton}" Command="{Binding SaveNameCommand}" IsDefault="False" />
+          <ToggleButton x:Name="FacesToggle" Content="Faces" IsChecked="{Binding ShowFaces}" ToolTip.Tip="Show this person's faces to correct them" />
+          <TextBox x:Name="MergeBox" Width="160" PlaceholderText="Merge into…" Text="{Binding MergeText}" />
+          <Button Content="Merge" Command="{Binding MergeCommand}" ToolTip.Tip="Move every face of this person to the one named, and remove this one" />
+          <Button Content="{Binding HideButton}" Command="{Binding ToggleHiddenCommand}" />
+          <Button Classes="danger" Content="{Binding DeleteButton}" Command="{Binding DeleteCommand}" />
+        </WrapPanel>
+        <!-- Selected faces -->
+        <WrapPanel IsVisible="{Binding ShowFaceTiles}" ItemSpacing="8" LineSpacing="6">
+          <TextBlock Classes="muted" VerticalAlignment="Center" Text="{Binding SelectedFaces, StringFormat='{}{0:N0} selected'}" />
+          <TextBox x:Name="AssignBox" Width="200" PlaceholderText="Who is this?" Text="{Binding AssignText}" />
+          <Button Content="Assign" Command="{Binding AssignSelectedCommand}" />
+          <Button Content="Not this person" Command="{Binding NotThisPersonCommand}" IsVisible="{Binding HasPerson}" />
+          <Button Content="Use as cover" Command="{Binding UseAsCoverCommand}" IsVisible="{Binding HasPerson}" />
+        </WrapPanel>
+        <TextBlock Classes="note" Text="{Binding Message}" IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+      </StackPanel>
+
+      <Panel>
+        <v:PhotoGridView DataContext="{Binding Grid}" IsVisible="{Binding $parent[UserControl].((vm:PeopleViewModel)DataContext).ShowPhotos}" />
+        <ScrollViewer x:Name="FaceScroller" IsVisible="{Binding ShowFaceTiles}" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Margin="16,4,16,16" Spacing="10">
+            <TextBlock Classes="help" Text="Click faces to select them. A name under a face is who it looks most like: click it to agree."
+                       IsVisible="{Binding ShowUnassigned}" />
+            <ItemsControl x:Name="FaceTiles" ItemsSource="{Binding Faces}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate><WrapPanel ItemSpacing="8" LineSpacing="8" /></ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:FaceTileViewModel">
+                  <v:Realizer>
+                    <Panel Width="120" Height="120">
+                      <ToggleButton Classes="face" IsChecked="{Binding IsSelected}" Padding="0" Width="120" Height="120">
+                        <Image Source="{Binding Picture}" Stretch="UniformToFill" />
+                      </ToggleButton>
+                      <Button Classes="suggest" Content="{Binding Suggestion}" IsVisible="{Binding HasSuggestion}" ToolTip.Tip="{Binding SuggestionTip}"
+                              Command="{Binding AcceptCommand}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="4" />
+                    </Panel>
+                  </v:Realizer>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Classes="help" Text="No faces here." IsVisible="{Binding !Faces.Count}" />
+            <Button Content="Show more" HorizontalAlignment="Center" Command="{Binding MoreFacesCommand}" IsVisible="{Binding HasMoreFaces}" />
+          </StackPanel>
+        </ScrollViewer>
+      </Panel>
+    </DockPanel>
+  </Grid>
+</UserControl>

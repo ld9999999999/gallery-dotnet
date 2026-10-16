@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The library behind both front ends: index database, scanner, thumbnails, transcoding, albums, metadata and faces. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- NU1902/NU1903: ImageSharp 3.1.x advisories concern denial-of-service on malformed images. The gallery only decodes
+         the owner's own files, and 4.x requires a Six Labors licence key, so we stay on 3.1 deliberately. -->
+    <NoWarn>$(NoWarn);NU1902;NU1903</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.89" />
+    <PackageReference Include="MetadataExtractor" Version="2.9.3" />
+    <!-- Finding faces (docs/faces.md). The CPU package; on macOS it includes CoreML. -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="System.IO.Hashing" Version="10.0.12" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Gallery.Develop\Gallery.Develop.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.Extensions.Hosting" />
+    <Using Include="Microsoft.Extensions.Logging" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Gallery.Tests" />
+    <InternalsVisibleTo Include="Gallery.Web" />
+    <InternalsVisibleTo Include="Gallery.Desktop" />
+    <InternalsVisibleTo Include="Gallery.Desktop.Tests" />
+  </ItemGroup>
+
+</Project>

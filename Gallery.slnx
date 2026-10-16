@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Gallery.Core/Gallery.Core.csproj" />
+    <Project Path="src/Gallery.Desktop/Gallery.Desktop.csproj" />
+    <Project Path="src/Gallery.Develop/Gallery.Develop.csproj" />
+    <Project Path="src/Gallery.Develop.Wasm/Gallery.Develop.Wasm.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="src/Gallery.Web/Gallery.Web.csproj" />
+  </Folder>
+</Solution>

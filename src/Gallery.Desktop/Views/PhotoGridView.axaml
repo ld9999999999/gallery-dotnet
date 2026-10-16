@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gallery.Desktop.ViewModels"
+             xmlns:v="using:Gallery.Desktop.Views"
+             x:Class="Gallery.Desktop.Views.PhotoGridView"
+             x:DataType="vm:PhotoGridViewModel">
+  <Panel>
+    <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+      <!-- One entry per row; the virtualizing panel creates only the rows near the screen. -->
+      <ItemsControl x:Name="RowsList" ItemsSource="{Binding Rows}" Margin="12,6,12,12">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <VirtualizingStackPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:PhotoRowViewModel">
+            <v:Realizer Height="{Binding Grid.RowHeight}">
+              <ItemsControl ItemsSource="{Binding Cells}" VerticalAlignment="Top">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="6" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:PhotoCellViewModel">
+                    <Button Classes="cell" Width="{Binding Grid.CellSize}" Height="{Binding Grid.CellSize}"
+                            Command="{Binding OpenCommand}" ToolTip.Tip="{Binding Label}">
+                      <Panel>
+                        <Image Source="{Binding Thumb}" Stretch="UniformToFill" />
+                        <v:Icon Data="{StaticResource IconNote}" IsVisible="{Binding IsAudio}" Width="44" Height="44"
+                                Foreground="{StaticResource GalleryMuted}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Top">
+                          <Border Classes="badge raw" IsVisible="{Binding IsRaw}">
+                            <TextBlock Text="RAW" />
+                          </Border>
+                          <Border Classes="badge" IsVisible="{Binding Is360}" ToolTip.Tip="360° photo">
+                            <TextBlock Text="360°" />
+                          </Border>
+                        </StackPanel>
+                        <Border Classes="badge" IsVisible="{Binding HasVariations}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                ToolTip.Tip="Variations: the same photo in more than one file">
+                          <TextBlock Text="{Binding Variations}" />
+                        </Border>
+                        <Border Classes="badge" IsVisible="{Binding IsVideo}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="5,3">
+                          <v:Icon Data="{StaticResource IconPlay}" Filled="True" Width="11" Height="11" Foreground="White" />
+                        </Border>
+                        <Border Classes="badge" IsVisible="{Binding HasDuration}" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                          <TextBlock Text="{Binding Duration}" />
+                        </Border>
+                        <Border Classes="badge" IsVisible="{Binding IsEdited}" HorizontalAlignment="Right" VerticalAlignment="Bottom" Padding="4,3"
+                                ToolTip.Tip="Edited in the photo editor">
+                          <v:Icon Data="{StaticResource IconEdit}" Width="12" Height="12" Foreground="White" />
+                        </Border>
+                      </Panel>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </v:Realizer>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+    <TextBlock IsVisible="{Binding IsEmpty}" Text="Nothing here." Classes="muted" FontSize="15"
+               HorizontalAlignment="Center" VerticalAlignment="Center" />
+  </Panel>
+</UserControl>

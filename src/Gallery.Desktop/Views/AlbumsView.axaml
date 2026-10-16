@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gallery.Desktop.ViewModels"
+             xmlns:v="using:Gallery.Desktop.Views"
+             x:Class="Gallery.Desktop.Views.AlbumsView"
+             x:DataType="vm:AlbumsViewModel">
+  <Grid ColumnDefinitions="300,*">
+    <DockPanel Background="{StaticResource GalleryPanel}">
+      <StackPanel DockPanel.Dock="Top" Margin="12,10,12,6" Spacing="6">
+        <DockPanel>
+          <Button DockPanel.Dock="Right" Content="Create from folders" Command="{Binding CreateFromFoldersCommand}"
+                  ToolTip.Tip="Create or update an album for each folder, split where the dates are far apart" />
+          <TextBlock Classes="muted" VerticalAlignment="Center" Text="{Binding Albums.Count, StringFormat='{}{0:N0} albums'}" />
+        </DockPanel>
+        <TextBlock Classes="note" Text="{Binding Message}" IsVisible="{Binding Message, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        <TextBlock Classes="help" IsVisible="{Binding IsEmpty}" Text="No albums yet. Create them from folder names, or in the web gallery." />
+      </StackPanel>
+      <ListBox x:Name="AlbumList" ItemsSource="{Binding Albums}" SelectedItem="{Binding Selected}" Background="Transparent">
+        <ListBox.ItemTemplate>
+          <DataTemplate x:DataType="vm:AlbumEntryViewModel">
+            <v:Realizer>
+              <Grid ColumnDefinitions="48,*">
+                <Border Width="48" Height="48" CornerRadius="6" ClipToBounds="True" Background="{StaticResource GalleryCell}">
+                  <Image Source="{Binding Cover}" Stretch="UniformToFill" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="2">
+                  <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                  <TextBlock Classes="muted" FontSize="12" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+              </Grid>
+            </v:Realizer>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+    <DockPanel Grid.Column="1">
+      <StackPanel DockPanel.Dock="Top" Margin="16,10,16,0" IsVisible="{Binding Selected, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <TextBlock Classes="title" Text="{Binding Selected.Name}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Classes="muted" FontSize="12" Text="{Binding Selected.Detail}" />
+      </StackPanel>
+      <v:PhotoGridView DataContext="{Binding Grid}" />
+    </DockPanel>
+  </Grid>
+</UserControl>

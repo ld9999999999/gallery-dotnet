@@ -1,0 +1,9 @@
+<Project>
+  <Target Name="DropMobileOnnxRuntime" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)"
+        Condition="'%(RuntimeTargetsCopyLocalItems.NuGetPackageId)' == 'Microsoft.ML.OnnxRuntime' And ('%(RuntimeTargetsCopyLocalItems.RuntimeIdentifier)' == 'android' Or '%(RuntimeTargetsCopyLocalItems.RuntimeIdentifier)' == 'ios')" />
+    </ItemGroup>
+  </Target>
+
+</Project>

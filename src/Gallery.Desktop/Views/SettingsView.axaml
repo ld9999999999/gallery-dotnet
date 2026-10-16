@@ -1,0 +1,119 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Gallery.Desktop.ViewModels"
+             x:Class="Gallery.Desktop.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel MaxWidth="820" Margin="20,14,20,24" Spacing="14" HorizontalAlignment="Stretch">
+
+      <!-- Source folders -->
+      <Border Classes="panel">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="section" Text="Source folders" />
+          <TextBlock Classes="help" Text="Folders of photos, videos and music to show. Files are never moved or changed; subfolders are included." />
+          <ItemsControl x:Name="SourceList" ItemsSource="{Binding Sources}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:SourceEntryViewModel">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,2">
+                  <CheckBox IsChecked="{Binding Enabled}" ToolTip.Tip="Include this folder" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding Path}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0,8,0" />
+                  <Border Grid.Column="2" Classes="pill" IsVisible="{Binding IsMissing}" Margin="0,0,8,0">
+                    <TextBlock Text="not found" FontSize="11" Foreground="{StaticResource GalleryDanger}" />
+                  </Border>
+                  <Button Grid.Column="3" Content="Remove"
+                          Command="{Binding $parent[ItemsControl].((vm:SettingsViewModel)DataContext).RemoveSourceCommand}"
+                          CommandParameter="{Binding}" />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <TextBlock Classes="help" IsVisible="{Binding HasNoSources}" Text="No folders yet." />
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBox x:Name="NewSourceBox" PlaceholderText="Folder to add, e.g. ~/Pictures" Text="{Binding NewSource}" />
+            <Button Grid.Column="1" Content="Add" Margin="8,0,0,0" Command="{Binding AddSourceCommand}" IsDefault="False" />
+            <Button Grid.Column="2" Content="Browse…" Margin="8,0,0,0" Command="{Binding BrowseSourceCommand}"
+                    ToolTip.Tip="Choose a folder and add it" />
+          </Grid>
+          <TextBlock Classes="note" Text="{Binding SourceMessage}" IsVisible="{Binding SourceMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Scan -->
+      <Border Classes="panel">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="section" Text="Scan" />
+          <TextBlock Classes="help" Text="Deleted files are noticed as they happen; new files are picked up by a scan." />
+          <TextBlock FontSize="12" Text="{Binding ScanStatus}" TextWrapping="Wrap" />
+          <WrapPanel ItemSpacing="8" LineSpacing="6">
+            <Button Content="Scan now" Command="{Binding ScanNowCommand}" />
+            <Button Content="Cancel scan" Command="{Binding CancelScanCommand}" />
+            <Button Content="Generate missing thumbnails" Command="{Binding GenerateThumbnailsCommand}" />
+          </WrapPanel>
+          <TextBlock Classes="note" Text="{Binding ActionMessage}" IsVisible="{Binding ActionMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Faces -->
+      <Border Classes="panel">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="section" Text="Faces" />
+          <TextBlock Classes="help" Text="Faces are found in every photo in the background, so that people can be named and found later. The models run on this computer; no photo leaves it." />
+          <CheckBox Content="Find faces in photos" IsChecked="{Binding FacesEnabled}" />
+          <Grid ColumnDefinitions="110,*">
+            <TextBlock Text="Model pack" VerticalAlignment="Center" />
+            <ComboBox x:Name="FacePackBox" Grid.Column="1" MinWidth="180" ItemsSource="{Binding FacePacks}" SelectedItem="{Binding FacePack}" />
+          </Grid>
+          <TextBlock Classes="help" Text="{Binding FacePackInfo}" TextWrapping="Wrap" />
+          <TextBlock FontSize="12" Text="{Binding FaceStatus}" TextWrapping="Wrap" />
+          <WrapPanel ItemSpacing="8" LineSpacing="6">
+            <!-- A TextBlock, not Content text: in a button's text "_" marks a keyboard shortcut, and pack names have one. -->
+            <Button Command="{Binding DownloadFacesCommand}" IsVisible="{Binding FaceModelsMissing}">
+              <TextBlock Text="{Binding FaceDownloadText}" />
+            </Button>
+            <Button Content="Retry failed photos" Command="{Binding RetryFacesCommand}" />
+            <Button Content="Find faces again in every photo" Command="{Binding FindFacesAgainCommand}" />
+          </WrapPanel>
+        </StackPanel>
+      </Border>
+
+      <!-- Transcodes and edits -->
+      <Border Classes="panel">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="section" Text="Folder for transcodes and edits" />
+          <TextBlock Classes="help" Text="New files the gallery makes, such as playable copies of videos, go here. Leave empty for the library folder." />
+          <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBox x:Name="DerivedBox" PlaceholderText="{Binding DerivedDefault}" Text="{Binding DerivedDir}" />
+            <Button Grid.Column="1" Content="Browse…" Margin="8,0,0,0" Command="{Binding BrowseDerivedCommand}" />
+            <Button Grid.Column="2" Content="Save" Margin="8,0,0,0" Command="{Binding SaveDerivedCommand}" />
+          </Grid>
+          <TextBlock Classes="note" Text="{Binding DerivedMessage}" IsVisible="{Binding DerivedMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Library folder and tools -->
+      <Border Classes="panel">
+        <StackPanel Spacing="8">
+          <TextBlock Classes="section" Text="Library" />
+          <TextBlock Classes="help" Text="Where the index database and thumbnails are kept. Another folder opens (or starts) another library; the web server's default is ~/.gallery." />
+          <Grid ColumnDefinitions="110,*,Auto" RowDefinitions="Auto,Auto,Auto">
+            <TextBlock Text="Library folder" VerticalAlignment="Center" />
+            <TextBox x:Name="DataDirBox" Grid.Column="1" Text="{Binding DataDir}" />
+            <Button Grid.Column="2" Content="Browse…" Margin="8,0,0,0" Command="{Binding BrowseDataDirCommand}" />
+            <TextBlock Grid.Row="1" Text="ffmpeg" VerticalAlignment="Center" />
+            <TextBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="{Binding FfmpegPath}" PlaceholderText="ffmpeg" />
+            <Button Grid.Row="1" Grid.Column="2" Content="Browse…" Margin="8,8,0,0" Command="{Binding BrowseFfmpegCommand}" />
+            <TextBlock Grid.Row="2" Text="ffprobe" VerticalAlignment="Center" />
+            <TextBox Grid.Row="2" Grid.Column="1" Margin="0,8,0,0" Text="{Binding FfprobePath}" PlaceholderText="ffprobe" />
+            <Button Grid.Row="2" Grid.Column="2" Content="Browse…" Margin="8,8,0,0" Command="{Binding BrowseFfprobeCommand}" />
+          </Grid>
+          <TextBlock Classes="help" Text="ffmpeg and ffprobe read videos and audio; leave them as they are if they are on the PATH." />
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <Button Content="Apply and reopen library" Command="{Binding ApplyLibraryCommand}" Classes="accent" />
+            <TextBlock Classes="help" VerticalAlignment="Center" IsVisible="{Binding LibraryChanged}" Text="Not applied yet" />
+          </StackPanel>
+          <TextBlock Classes="note" Text="{Binding LibraryMessage}" IsVisible="{Binding LibraryMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

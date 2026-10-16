@@ -1,0 +1,188 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Top tabs -->
+  <Style Selector="TabControl#Tabs">
+    <Setter Property="Padding" Value="0" />
+  </Style>
+  <Style Selector="TabControl#Tabs TabItem">
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="MinHeight" Value="44" />
+    <Setter Property="Padding" Value="16,0" />
+  </Style>
+
+  <!-- Grid cells -->
+  <Style Selector="Button.cell">
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Background" Value="{StaticResource GalleryCell}" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="Button.cell:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.cell:pressed /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource GalleryCell}" />
+  </Style>
+  <Style Selector="Button.cell:pressed">
+    <Setter Property="RenderTransform" Value="none" />
+  </Style>
+  <Style Selector="Button.cell:focus-visible /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{StaticResource GalleryAccent}" />
+    <Setter Property="BorderThickness" Value="2" />
+  </Style>
+  <Style Selector="Border.badge">
+    <Setter Property="Background" Value="#99000000" />
+    <Setter Property="CornerRadius" Value="4" />
+    <Setter Property="Padding" Value="5,1" />
+    <Setter Property="Margin" Value="5" />
+  </Style>
+  <Style Selector="Border.badge.raw">
+    <Setter Property="Background" Value="#D9C87814" />
+  </Style>
+  <Style Selector="Border.badge > TextBlock">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+
+  <!-- Text -->
+  <Style Selector="TextBlock.muted">
+    <Setter Property="Foreground" Value="{StaticResource GalleryMuted}" />
+  </Style>
+  <Style Selector="TextBlock.title">
+    <Setter Property="FontSize" Value="18" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+  </Style>
+  <Style Selector="TextBlock.section">
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Margin" Value="0,0,0,2" />
+  </Style>
+  <Style Selector="TextBlock.help">
+    <Setter Property="Foreground" Value="{StaticResource GalleryMuted}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+  <Style Selector="TextBlock.note">
+    <Setter Property="Foreground" Value="#8fd18f" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Settings sections -->
+  <Style Selector="Border.panel">
+    <Setter Property="Background" Value="{StaticResource GalleryPanel}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GalleryBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="16,14" />
+  </Style>
+  <Style Selector="Border.pill">
+    <Setter Property="Background" Value="#33ff5f6d" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+
+  <!-- Viewer -->
+  <Style Selector="Button.tool, ToggleButton.tool">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontSize" Value="17" />
+    <Setter Property="MinWidth" Value="38" />
+    <Setter Property="Padding" Value="8,4" />
+  </Style>
+  <Style Selector="ToggleButton.tool:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="{StaticResource GalleryAccent}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.nav">
+    <Setter Property="Background" Value="#33000000" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontSize" Value="34" />
+    <Setter Property="Width" Value="56" />
+    <Setter Property="Height" Value="96" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.nav:disabled">
+    <Setter Property="Opacity" Value="0" />
+  </Style>
+  <!-- Editor -->
+  <Style Selector="Button.bar, ToggleButton.bar">
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Padding" Value="10,5" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.accent">
+    <Setter Property="Background" Value="{StaticResource GalleryAccent}" />
+    <Setter Property="Foreground" Value="White" />
+  </Style>
+  <Style Selector="Button.accent:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#334f8cff" />
+  </Style>
+  <Style Selector="Button.danger">
+    <Setter Property="Foreground" Value="{StaticResource GalleryDanger}" />
+  </Style>
+  <Style Selector="TextBlock.label">
+    <Setter Property="Foreground" Value="{StaticResource GalleryMuted}" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+  <Style Selector="Slider.edit">
+    <Setter Property="Margin" Value="0,-8,0,-6" />
+  </Style>
+  <Style Selector="RadioButton.chip">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Padding" Value="4,0,8,0" />
+  </Style>
+  <Style Selector="Border.dialog">
+    <Setter Property="Background" Value="{StaticResource GalleryPanel}" />
+    <Setter Property="BorderBrush" Value="{StaticResource GalleryBorder}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="16,14" />
+    <Setter Property="Width" Value="380" />
+    <Setter Property="Margin" Value="16" />
+    <Setter Property="HorizontalAlignment" Value="Right" />
+    <Setter Property="VerticalAlignment" Value="Top" />
+    <Setter Property="BoxShadow" Value="0 8 24 0 #80000000" />
+  </Style>
+  <Style Selector="Border.toast">
+    <Setter Property="Background" Value="#2b3b5c" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="14,8" />
+  </Style>
+
+  <Style Selector="Button.link">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="Foreground" Value="{StaticResource GalleryAccent}" />
+    <Setter Property="FontSize" Value="12" />
+  </Style>
+
+  <!-- People: face pictures to select, and the suggestion under one -->
+  <Style Selector="ToggleButton.face">
+    <Setter Property="Background" Value="{StaticResource GalleryCell}" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="ClipToBounds" Value="True" />
+    <Setter Property="BorderThickness" Value="3" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+  </Style>
+  <Style Selector="ToggleButton.face:checked /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="BorderBrush" Value="{StaticResource GalleryAccent}" />
+    <Setter Property="Background" Value="{StaticResource GalleryCell}" />
+  </Style>
+  <Style Selector="Button.suggest">
+    <Setter Property="Background" Value="#e64f8cff" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Padding" Value="4,2" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+  </Style>
+</Styles>

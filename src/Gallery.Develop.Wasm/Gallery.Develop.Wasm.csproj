@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+  <!-- Gallery.Develop compiled to WebAssembly (AOT + SIMD) for the browser editor. Gallery.Web publishes it into
+       wwwroot/editor when the wasm-tools workload is installed (see docs/raw-editor.md). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>browser-wasm</RuntimeIdentifier>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RunAOTCompilation>true</RunAOTCompilation>
+    <WasmEnableSIMD>true</WasmEnableSIMD>
+    <!-- The page loads _framework/dotnet.js itself; no index.html or service worker. -->
+    <WasmGenerateAppBundle>false</WasmGenerateAppBundle>
+  </PropertyGroup>
+
+  <!-- Gallery.Develop's sources compiled in, rather than a project reference: Gallery.Web publishes this project from
+       inside its own build, and a nested restore of a shared project could disturb the outer build. -->
+  <ItemGroup>
+    <Compile Include="..\Gallery.Develop\**\*.cs" Exclude="..\Gallery.Develop\obj\**;..\Gallery.Develop\bin\**" LinkBase="Develop" />
+  </ItemGroup>
+
+</Project>
